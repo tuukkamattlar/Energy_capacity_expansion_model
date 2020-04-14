@@ -17,7 +17,7 @@ using CSV
 
 
 #GENERATE AND IMPORT DATA
-include("data/values.jl")
+include("values.jl")
 
 #APPLY CARBON TAX
 TAX = 1000

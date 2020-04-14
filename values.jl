@@ -160,7 +160,7 @@ for h in Hours
     capFactor[h, 4] = 1
     capFactor[h, 5] = udata[h,5]
     capFactor[h, 6] = udata[h,6]
-    capFactor[h, 7] = ((sin((h+3)/5))^2)./2 .+0.3 .+rand(Float64,1)[1]*0.2
+    capFactor[h, 7] = ((sin((h+3)/5))^2)./2 .+0.3 .+rand(Float64,1)[1]*0.2 #TO BE CONSTRUCTED BETTER
 end
 
 #OTHER
