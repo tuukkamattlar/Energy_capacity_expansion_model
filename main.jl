@@ -15,6 +15,7 @@ using CSV
 # 6 solar
 # 7 water
 
+#NOTE: SELECT LENGTH OF PERIOD IN VALUES.JL
 
 #GENERATE AND IMPORT DATA
 include("values.jl")
@@ -72,12 +73,12 @@ model = Model(Gurobi.Optimizer)
 
 #EXPRESSIONS
 
-useC = @expression(model, sum(variableCostT[t]*EnergyProduction[h,t]
+useC = @expression(model, sum(variableCostT[t]*EnergyProduction[h,t]/eff[t]
     + fixedCostT[t]*(iniCapT[t] + AdditionalCapacity[t]) for t in Tech, h in Hours)
 )
 einvC = @expression(model, sum(AdditionalCapacity[t]*invCostT[t]*(1/expLifeTimeT[t]) for t in Tech))
 sinvC = @expression(model, sum(AdditionalStorage[s]*invCostS[s]*(1/expLifeTimeS[s]) for s in Storage))
-taxC = @expression(model, sum(EnergyProduction[h,t]*TAX*(1/proEmisFactor[t-1]) for t in CarbonTech, h in Hours))
+taxC = @expression(model, sum(EnergyProduction[h,t]*TAX*(1/proEmisFactor[t-1])/eff[t] for t in CarbonTech, h in Hours))
 rampExp = @expression(model, sum(((EnergyProduction[h,1] - EnergyProduction[h-1,1])^2)*1000 for h in Hours[Hours.>1]))
 
 
@@ -118,16 +119,27 @@ plot(Results[:,13])
 
 pt = Matrix{Float64}(undef, length(Hours), 15)
 for h in Hours
-    pt[h, 1] = Results[h,1]
-    pt[h, 2] = pt[h,1] + Results[h,2]
-    pt[h, 3] = pt[h,2] + Results[h,3]
-    pt[h, 4] = pt[h,3]+ Results[h,4]
-    pt[h, 5] = pt[h,4]+ Results[h,5]
-    pt[h, 6] = pt[h,5]+Results[h,6]
-    pt[h, 7] = pt[h,6]+Results[h,7]
+    pt[h, 1] = Results[h,1] + Results[h,2] + Results[h,3] + Results[h,7] + Results[h,4] + Results[h,6] + Results[h,5] + Results[h,13]
+    pt[h, 2] = Results[h,1] + Results[h,2] + Results[h,3] + Results[h,7] + Results[h,4] + Results[h,6] + Results[h,5]
+    pt[h, 3] = Results[h,1] + Results[h,2] + Results[h,3] + Results[h,7] + Results[h,4] + Results[h,6]
+    pt[h, 4] = Results[h,1] + Results[h,2] + Results[h,3] + Results[h,7] + Results[h,4]
+    pt[h, 5] = Results[h,1] + Results[h,2] + Results[h,3] + Results[h,7]
+    pt[h, 7] = Results[h,1] + Results[h,2] + Results[h,3]
+    pt[h, 7] = Results[h,1] + Results[h,2]
+    pt[h, 8] = Results[h,1]
 end
-plot(pt[:,1:7], label = ["Nuclear" "CHP" "CHP2" "Gas" "Wind" "PV" "Hydro"])
+plot(pt[:,1:8], fill = (0, 1), label = ["Storage" "Wind" "PV" "Gas" "hydro" "CHP2" "CHP" "Nuclear"], ylim=0:12000)
 
+#plot(pt[:,1])
+
+additions = Array{Float64}(undef, length(Tech)+3)
+for t in Tech
+    additions[t] = value(AdditionalCapacity[t])
+end
+additions[8] = value(AdditionalStorage[1])
+additions[9] = value(AdditionalStorage[2])
+additions[10] = value(AdditionalStorage[3])
+plot(additions)
 
 
 #SAVE THE OBJECTIVE

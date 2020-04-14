@@ -9,7 +9,7 @@
 # 7 hydro
 
 #LENGTH OF INVESTIGATION
-LEN = 700
+LEN = 1100
 
 ################################################################################
 # SETS
@@ -76,27 +76,27 @@ eff = Array{Float64}(undef, length(Tech))
 
 # 1 nuclear
 iniCapT[1] = 2794
-maxCapT[1] = 50000
-rampUpMax[1] = 1
-rampDownMax[1] = 1
-variableCostT[1] = 37
-fixedCostT[1] = 200
+maxCapT[1] = 10000 #random
+rampUpMax[1] = 1 #not known
+rampDownMax[1] = 1 #not known
+variableCostT[1] = 1 #or 37??
+fixedCostT[1] = 200 #not known
 invCostT[1] = 5000000
-expLifeTimeT[1] = 60
+expLifeTimeT[1] = 60 #not known
 eff[1] = 0.4
 
 # 2 coal slow
 iniCapT[2] = 3200
-maxCapT[2] = 40000
-rampUpMax[2] = 0.1
-rampDownMax[2] = 0.6
+maxCapT[2] = 10000 #not known
+rampUpMax[2] = 0.1 #not known
+rampDownMax[2] = 0.6 #not known
 variableCostT[2] = 11
-fixedCostT[2] = 100
+fixedCostT[2] = 100 #not known
 invCostT[2] = 1600000
-expLifeTimeT[2] = 50
+expLifeTimeT[2] = 40 #not known
 eff[2] = 0.45
 
-# 3 coal fast
+# 3 coal fast #not known
 iniCapT[3] = 0
 maxCapT[3] = 0
 rampUpMax[3] = 0.1
@@ -108,48 +108,48 @@ expLifeTimeT[3] = 50
 eff[3] = 0.4
 
 # 4 gas
-iniCapT[4] = 1000
+iniCapT[4] = 1000 #"wiki"
 maxCapT[4] = 50000
-rampUpMax[4] = 0.1
-rampDownMax[4] = 0.1
+rampUpMax[4] = 0.1 #not known
+rampDownMax[4] = 0.1 #not known
 variableCostT[4] = 22
-fixedCostT[4] = 100
+fixedCostT[4] = 150 #not known
 invCostT[4] = 500000
-expLifeTimeT[4] = 50
+expLifeTimeT[4] = 40 #not known
 eff[4] = 0.6
 
 # 5 wind
 iniCapT[5] = 2000
 maxCapT[5] = 20000
-rampUpMax[5] = 1
-rampDownMax[5] = 1
-variableCostT[5] = 0
-fixedCostT[5] = 100
+rampUpMax[5] = 1 #not known
+rampDownMax[5] = 1 #not known
+variableCostT[5] = 0 #not known
+fixedCostT[5] = 50 #not known
 invCostT[5] = 1200000
-expLifeTimeT[5] = 50
+expLifeTimeT[5] = 30 #not known
 eff[5] = 1
 
 # 6 solar
-iniCapT[6] = 80
-maxCapT[6] = 15000
-rampUpMax[6] = 1
-rampDownMax[6] = 1
+iniCapT[6] = 80 #wiki
+maxCapT[6] = 15000 #not known
+rampUpMax[6] = 1 #not known
+rampDownMax[6] = 1 #not known
 variableCostT[6] = 0
-fixedCostT[6] = 100
+fixedCostT[6] = 100 #not known
 invCostT[6] = 800000
-expLifeTimeT[6] = 50
-eff[6] = 1
+expLifeTimeT[6] = 30 #not known
+eff[6] = 1 #not known
 
 # 7 hydro
 iniCapT[7] = 3100
-maxCapT[7] = 50000
-rampUpMax[7] = 0.5
-rampDownMax[7] = 0.5
+maxCapT[7] = 5000 #not known
+rampUpMax[7] = 1 #not known
+rampDownMax[7] = 1 #not known
 variableCostT[7] = 0
-fixedCostT[7] = 100
+fixedCostT[7] = 100 #not known
 invCostT[7] = 1000000
-expLifeTimeT[7] = 50
-eff[7] = 1
+expLifeTimeT[7] = 50 #not known
+eff[7] = 0.7 #not known
 
 
 
@@ -167,7 +167,7 @@ end
 proEmisFactor =  Array{Float64}(undef, length(CarbonTech))
 
 for c in CarbonTech
-    proEmisFactor[c-1] = 300
+    proEmisFactor[c-1] = 8.4 #checked
 end
 
 
@@ -181,11 +181,11 @@ invCostS = Array{Float64}(undef, length(Storage))
 expLifeTimeS = Array{Float64}(undef, length(Storage))
 
 for s in Storage
-    chargeMax[s] = 40
-    dischargeMax[s] = 40
-    iniCapS[s] = 500
-    maxCapS[s] = 800
-    invCostS[s] = 400
+    chargeMax[s] = 500
+    dischargeMax[s] = 800
+    iniCapS[s] = 800
+    maxCapS[s] = 1000
+    invCostS[s] = 40000
     expLifeTimeS[s] = 20
 end
 
