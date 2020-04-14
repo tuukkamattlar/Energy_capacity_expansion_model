@@ -25,8 +25,8 @@ Storage = collect(1:3)
 ################################################################################
 # IMPORT DATA
 
-usage = CSV.read("usedata.csv") #RENEWABLES NINJA
-dema = CSV.read("demandinfinland.csv") #FINGRID (MWh)
+usage = CSV.read("data/usedata.csv") #RENEWABLES NINJA
+dema = CSV.read("data/demandinfinland.csv") #FINGRID (MWh)
 locfromend = 1000
 
 sp = length(usage[:,1])-length(Hours)-locfromend
