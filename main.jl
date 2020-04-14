@@ -128,9 +128,39 @@ for h in Hours
     pt[h, 7] = Results[h,1] + Results[h,2]
     pt[h, 8] = Results[h,1]
 end
-plot(pt[:,1:8], fill = (0, 1), label = ["Storage" "Wind" "PV" "Gas" "hydro" "CHP2" "CHP" "Nuclear"], ylim=0:12000)
+plot(pt[:,1:8], fill = (0, 1), palette=cgrad([:red, :green, :yellow, :blue]), label = ["Storage" "Wind" "PV" "Gas" "Hydro" "CHP2" "CHP" "Nuclear"], ylim=0:12000)
 
 #plot(pt[:,1])
+
+
+pt = Matrix{Float64}(undef, length(Hours), 15)
+for h in Hours
+    a = 8*Results[h,1] + 7*Results[h,2] + 6*Results[h,3] + 5*Results[h,7] + 4*Results[h,4] + 3*Results[h,6] + 2*Results[h,5] + Results[h,13]
+    pt[h, 1] = (Results[h,1] + Results[h,2] + Results[h,3] + Results[h,7] + Results[h,4] + Results[h,6] + Results[h,5] + Results[h,13])/a
+    pt[h, 2] = (Results[h,1] + Results[h,2] + Results[h,3] + Results[h,7] + Results[h,4] + Results[h,6] + Results[h,5])/a
+    pt[h, 3] = (Results[h,1] + Results[h,2] + Results[h,3] + Results[h,7] + Results[h,4] + Results[h,6])/a
+    pt[h, 4] = (Results[h,1] + Results[h,2] + Results[h,3] + Results[h,7] + Results[h,4])/a
+    pt[h, 5] = (Results[h,1] + Results[h,2] + Results[h,3] + Results[h,7])/a
+    pt[h, 6] = (Results[h,1] + Results[h,2] + Results[h,3])/a
+    pt[h, 7] = (Results[h,1] + Results[h,2])/a
+    pt[h, 8] = (Results[h,1])/a
+    pt[h, 8] = sum(pt[h,i] for i in 1:8)
+    pt[h, 7] = sum(pt[h,i] for i in 1:7)
+    pt[h, 6] = sum(pt[h,i] for i in 1:6)
+    pt[h, 5] = sum(pt[h,i] for i in 1:5)
+    pt[h, 4] = sum(pt[h,i] for i in 1:4)
+    pt[h, 3] = sum(pt[h,i] for i in 1:3)
+    pt[h, 2] = sum(pt[h,i] for i in 1:2)
+    pt[h, 1] = sum(pt[h,i] for i in 1:1)
+end
+plot(pt[:,1:8], fill = (0, 1), label = ["Storage" "Wind" "PV" "Gas" "Hydro" "CHP2" "CHP" "Nuclear"], ylim=0:12000)
+plot(pt[:,5])
+
+
+
+
+
+
 
 additions = Array{Float64}(undef, length(Tech)+3)
 for t in Tech
