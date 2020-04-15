@@ -21,7 +21,7 @@ using CSV
 include("values.jl")
 
 #APPLY CARBON TAX
-TAX = 1000
+TAX = 25
 
 #LAUNCH MODEL
 model = Model(Gurobi.Optimizer)
@@ -114,6 +114,10 @@ for h in Hours
 end
 
 plot(Results[:,1:7], label = ["Nuclear" "CHP" "CHP2" "Gas" "Wind" "PV" "Hydro"])
+
+
+plot(Results[:,7],fill = (0, 1), palette=cgrad([:red, :green, :yellow, :blue]))
+
 
 plot(Results[:,13])
 

@@ -9,7 +9,7 @@
 # 7 hydro
 
 #LENGTH OF INVESTIGATION
-LEN = 1100
+LEN = 2000
 
 ################################################################################
 # SETS
@@ -17,6 +17,7 @@ LEN = 1100
 Tech = collect(1:7)
 CarbonTech = collect(2:4)
 RenewableTech = collect(5:7)
+NonStorableTech = collect(1:6)
 Hours = collect(1:LEN)
 Storage = collect(1:3)
 
