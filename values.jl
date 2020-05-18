@@ -9,7 +9,7 @@
 # 7 hydro
 
 #LENGTH OF INVESTIGATION
-LEN = 7000
+LEN = 1000
 
 ################################################################################
 # SETS
@@ -29,7 +29,7 @@ Region          = collect(1:5)
 
 usage       = CSV.read("data/usedata.csv") #RENEWABLES NINJA
 dema        = CSV.read("data/demandinfinland.csv") #FINGRID (MWh)
-locfromend  = 1000
+locfromend  = 1000 #USED to determine the starting time of input data
 
 
 sp      = length(usage[:,1])-length(Hours)-locfromend
@@ -55,7 +55,7 @@ end
 #TECH
 iniCapT             = Matrix{Float64}(undef, length(Tech), length(Region))
 maxCapT             = Matrix{Float64}(undef, length(Tech), length(Region))
-capFactor           = zeros(length(Hours), length(Tech), length(Region))
+capFactor           = zeros(length(Hours), length(TechNH), length(Region))
 #capFactor = Matrix{Float64}(undef, length(Hours), length(Tech), length(Region))
 rampUpMax           = Array{Float64}(undef, length(Tech))
 rampDownMax         = Array{Float64}(undef, length(Tech))
@@ -84,17 +84,21 @@ hydroMaxOverall     = Array{Float64}(undef, length(Region))
 #http://smartenergytransition.fi/en/
 #finnish-energy-system-can-be-made-100-fossil-fuel-free/
 
-
+#NOTE: Inserted some random factors to be deleted
 #REGION RELATED
 for r in Region
 
     # 1 nuclear
     iniCapT[1, r] = 2794
+        .+rand(Float64,1)[1]*500-500
     maxCapT[1,r] = 10000 #random
+        .+rand(Float64,1)[1]*500-500
 
     # 2 coal slow
     iniCapT[2,r] = 3200
+        .+rand(Float64,1)[1]*500-500
     maxCapT[2,r] = 10000 #not known
+        .+rand(Float64,1)[1]*500-500
 
     # 3 coal fast #not known
     iniCapT[3,r] = 0
@@ -102,15 +106,21 @@ for r in Region
 
     # 4 gas
     iniCapT[4,r] = 1000 #"wiki"
+        .+rand(Float64,1)[1]*200-200
     maxCapT[4,r] = 50000
+        .+rand(Float64,1)[1]*200-200
 
     # 5 wind
     iniCapT[5,r] = 2000
+        .+rand(Float64,1)[1]*500-500
     maxCapT[5,r] = 20000
+        .+rand(Float64,1)[1]*500-500
 
     # 6 solar
     iniCapT[6,r] = 80 #wiki
+        .+rand(Float64,1)[1]*100-100
     maxCapT[6,r] = 15000 #not known
+        .+rand(Float64,1)[1]*100-100
 
     # 7 hydro
     hydroMinReservoir[r]        = 2000 #TODO
@@ -200,9 +210,9 @@ for h in Hours
         capFactor[h, 2, r] = 1
         capFactor[h, 3, r] = 1
         capFactor[h, 4, r] = 1
-        capFactor[h, 5, r] = udata[h,5]
-        capFactor[h, 6, r] = udata[h,6]
-        capFactor[h, 7, r] = ((sin((h+3)/5))^2)./2 .+0.3 .+rand(Float64,1)[1]*0.2 #TO BE CONSTRUCTED BETTER
+        capFactor[h, 5, r] = udata[h,5]*((80 .+rand(Float64,1)[1] *40 )/100)
+        capFactor[h, 6, r] = udata[h,6]*((90 .+rand(Float64,1)[1] *20 )/100)
+        #capFactor[h, 7, r] = ((sin((h+3)/5))^2)./2 .+0.3 .+rand(Float64,1)[1]*0.2 #TO BE CONSTRUCTED BETTER
 
     end
 end
@@ -240,7 +250,7 @@ Demand = Matrix{Float64}(undef, length(Hours), length(Region))
 
 for h in Hours
     for r in Region
-        Demand[h, r] = udata[h,4] #TODO
+        Demand[h, r] = udata[h,4]*(0.9.+rand(Float64,1)[1]*0.2)
     end
 
 end
@@ -263,7 +273,7 @@ for r in Region
 end
 
 transInvCost = 30
-transCost    = 5
+transCost    = 0.0000001
 
 
 
