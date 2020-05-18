@@ -185,6 +185,9 @@ plot(pt[:,4,:,1], fill = (0, 1), palette=cgrad([:red, :green, :yellow, :blue]), 
 #STACKED %-WISE PLOT
 plot(pt[:,4,:,2], fill = (0, 0), palette=cgrad([:red, :green, :yellow, :blue, :red, :green, :yellow, :blue]), ylim=0:12000)
 
+#TRANSMISSION
+plot(TransResults[:,1,:])
+#PROMBLEM: THERE STILL SEEMS TO BE
 
 ##LOOP FOR DETERMINING RENEWABLES SHARE IN COMPARISON TO TAX LEVEL
 L = 20
@@ -203,8 +206,8 @@ for i in 1:L
     end
     result[i,2] = sum(RENW[h,1] for h in Hours)/sum(RENW[h,2]+RENW[h,1] for h in Hours )
 end
-
 plot(result[:,2])
+
 
 
 
