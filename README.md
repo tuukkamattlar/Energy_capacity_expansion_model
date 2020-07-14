@@ -7,7 +7,7 @@ Here's the current situation of electiricty production methods used in European 
 ![Europe](MYPLOTS/europe.png)
 
 The model has showed realistic simulations regarding this.
-![Example of the outcome](MYPLOTS/examplePlot.png)
+![Example of the outcome](MYPLOTS/examplePlot1.png)
 
 DISCLAIMER:
 Some parts of the data is generated using purely heuristic hand-waving methods and should not be concidered final.
