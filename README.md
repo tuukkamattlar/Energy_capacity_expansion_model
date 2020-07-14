@@ -3,7 +3,7 @@ The program is an energy production capacity expansion model. It uses real-world
 
 Used data is handled in values.jl, the model is implemented in model.js and the model is launched and visualised in main.jl.
 
-![Example of the outcome](europe.png)
+![Example of the outcome](MYPLOTS/europe.png)
 
 DISCLAIMER:
 Some parts of the data is generated using purely heuristic hand-waving methods and should not be concidered final.
