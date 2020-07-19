@@ -122,7 +122,7 @@ rampUpMax[3]        = 0.1
 rampDownMax[3]      = 0.1
 variableCostT[3]    = 4
 fixedCostT[3]       = 50
-invCostT[3]         = 1200000
+invCostT[3]         = 800000
 expLifeTimeT[3]     = 50
 eff[3]              = 0.4
 
@@ -147,7 +147,7 @@ eff[5]              = 1
 # 6 solar
 rampUpMax[6]        = 1 #not known
 rampDownMax[6]      = 1 #not known
-variableCostT[6]    = 0
+variableCostT[6]    = 10 #notknown
 fixedCostT[6]       = 100 #not known
 invCostT[6]         = 800000
 expLifeTimeT[6]     = 30 #not known
@@ -156,7 +156,7 @@ eff[6]              = 1 #not known
 # 7 hydro
 rampUpMax[7]        = 0.2 #not known
 rampDownMax[7]      = 0.3 #not known
-variableCostT[7]    = 0
+variableCostT[7]    = 110
 fixedCostT[7]       = 200 #not known
 invCostT[7]         = 1000000
 expLifeTimeT[7]     = 40 #not known
