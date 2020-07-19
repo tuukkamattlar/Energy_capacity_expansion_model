@@ -24,7 +24,7 @@ CarbonTech      = collect(2:4)
 RenewableTech   = collect(5:7)
 TechNH          = collect(1:6)
 Hours           = collect(1:LEN)
-Storage         = collect(1)
+Storage         = collect(1:1)
 Region          = collect(1:6)
 
 
@@ -91,17 +91,17 @@ for r in Region
     hydroMaxReservoir[r]        = d_capacity[r, 11]
     hydroReservoirCapacity[r]   = d_capacity[r, 12]
     hydroMinEnvFlow[r]          = d_capacity[r, 13]
-    hydroMaxOverall[r]          = d_capacity[r, 14]
+    hydroMaxOverall[r]          = d_capacity[r, 23]
     for h in Hours
-        hydroInflow[h,r]        = d_capacity[r, 8] .+rand(Float64,1)[1]*200 #TODO
+        hydroInflow[h,r]        = d_capacity[r, 8] .+rand(Float64,1)[1]*0.2*d_capacity[r, 8] #TODO
     end
 end
 
 #GENERAL
 
 # 1 nuclear
-rampUpMax[1]        = 1 #not known
-rampDownMax[1]      = 1 #not known
+rampUpMax[1]        = 0.1 #not known
+rampDownMax[1]      = 0.1 #not known
 variableCostT[1]    = 1 #or 37??
 fixedCostT[1]       = 200 #not known
 invCostT[1]         = 5000000
@@ -120,9 +120,9 @@ eff[2]              = 0.45
 # 3 biomass and waste etc
 rampUpMax[3]        = 0.1
 rampDownMax[3]      = 0.1
-variableCostT[3]    = 11
-fixedCostT[3]       = 100
-invCostT[3]         = 1600000
+variableCostT[3]    = 4
+fixedCostT[3]       = 50
+invCostT[3]         = 1200000
 expLifeTimeT[3]     = 50
 eff[3]              = 0.4
 
@@ -154,13 +154,13 @@ expLifeTimeT[6]     = 30 #not known
 eff[6]              = 1 #not known
 
 # 7 hydro
-rampUpMax[7]        = 1 #not known
-rampDownMax[7]      = 1 #not known
+rampUpMax[7]        = 0.2 #not known
+rampDownMax[7]      = 0.3 #not known
 variableCostT[7]    = 0
-fixedCostT[7]       = 100 #not known
+fixedCostT[7]       = 200 #not known
 invCostT[7]         = 1000000
-expLifeTimeT[7]     = 50 #not known
-eff[7]              = 0.7 #not known
+expLifeTimeT[7]     = 40 #not known
+eff[7]              = 1 #not known
 
 
 #Capacity factors for generation
@@ -177,11 +177,9 @@ end
 
 #OTHER
 proEmisFactor =  Array{Float64}(undef, length(CarbonTech))
-
-for c in CarbonTech
-    proEmisFactor[c-1] = 8.4 #checked
-end
-
+proEmisFactor[1] = 0.2*1000 #coal kgC02/kWh -> MWh same as MW
+proEmisFactor[2] = 0.5*1000 #biomass/waste
+proEmisFactor[3] = 0.4*1000 #biogas
 
 
 #STORAGE
@@ -226,7 +224,7 @@ end
 
 
 transInvCost = 30
-transCost    = 0.0000001
+transCost    = 0.0001
 
 
 

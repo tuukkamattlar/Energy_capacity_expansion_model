@@ -30,7 +30,7 @@ model = Model(Gurobi.Optimizer)
 @variable(model, 0 <= HydroReservoirLevel[Hours, Region])
 @variable(model, 0 <= HydroOutflow[Hours, Region])
 @variable(model, 0 <= HydroOutBypass[Hours, Region])
-@variable(model, 0 <= HydroOutPower[Hours, Region])
+#@variable(model, 0 <= HydroOutPower[Hours, Region])
 #@variable(model, TransBin[Hours,Region, Region], Bin)
 
 ##CONSTRAINTS
@@ -43,21 +43,23 @@ model = Model(Gurobi.Optimizer)
     capFactor[h,t,r]*(iniCapT[t,r]
     + AdditionalCapacity[t,r])
 )
-#@constraint(model, [t in Tech, r in Region], 0 <= AdditionalCapacity[t,r])
+#@constraint(model, [t in TechNH, r in Region], 0 <= AdditionalCapacity[t,r])
 @constraint(model, [t in TechNH, r in Region],
     AdditionalCapacity[t,r]
-    + iniCapT[t,r]
     <=
     maxCapT[t,r]
 )
 
 ## STORAGE
-@constraint(model, [s in Storage, h in Hours, r in Region], 0 <= StorageLevel[s,h,r])
-@constraint(model, [s in Storage, h in Hours, r in Region], StorageLevel[s,h,r] <= maxCapS[s,r])
-@constraint(model, [s in Storage, h in Hours, r in Region], 0 <= Charge[s,h,r])
+@constraint(model, [s in Storage, h in Hours[Hours.>1], r in Region], StorageLevel[s,h,r] - StorageLevel[s,h-1,r] == Charge[s,h-1,r] - Discharge[s,h-1,r])
+@constraint(model, [s in Storage, h in Hours, r in Region], StorageLevel[s,h,r] <= AdditionalStorage[s,r] + iniCapS[s,r])
+#@constraint(model, [s in Storage, h in Hours, r in Region], 0 <= Charge[s,h,r])
 @constraint(model, [s in Storage, h in Hours, r in Region], Charge[s,h,r] <= chargeMax[s])
-@constraint(model, [s in Storage, h in Hours, r in Region], 0 <= Discharge[s,h,r])
+#@constraint(model, [s in Storage, h in Hours, r in Region], 0 <= Discharge[s,h,r])
 @constraint(model, [s in Storage, h in Hours, r in Region], Discharge[s,h,r] <= dischargeMax[s])
+@constraint(model, [s in Storage, r in Region], AdditionalStorage[s,r] <= maxCapS[s,r])
+
+## TRANS
 #@constraint(model, [r in Region, h in Hours], Trans[h,r,r] == 0) #cannot trans ele within
 @constraint(model, [r in Region], AdditionalTrans[r,r] == 0) #cannot trans ele within
 @constraint(model, [r in Region, rr in Region, h in Hours], Trans[h, r, rr] <= transCap[r, rr] + AdditionalTrans[r, rr])
@@ -83,32 +85,32 @@ model = Model(Gurobi.Optimizer)
     <= rampUpMax[t]*(iniCapT[t,r] + AdditionalCapacity[t,r])
 )
 
-##HYDRO
+## HYDRO
 
 @constraint(model, [h in Hours, r in Region], hydroMinReservoir[r] <= HydroReservoirLevel[h,r])
 @constraint(model, [h in Hours, r in Region], hydroMaxReservoir[r] >= HydroReservoirLevel[h,r])
 @constraint(model, [h in Hours[Hours.<LEN], r in Region], HydroReservoirLevel[h+1,r] == HydroReservoirLevel[h,r] + hydroInflow[h,r] - HydroOutflow[h,r])
-@constraint(model, [h in Hours, r in Region], HydroOutBypass[h,r] + HydroOutPower[h,r] == HydroOutflow[h,r])
+@constraint(model, [h in Hours, r in Region], HydroOutBypass[h,r] + EnergyProduction[h,7,r] == HydroOutflow[h,r])
 @constraint(model, [h in Hours, r in Region], HydroOutflow[h,r] >= hydroMinEnvFlow[r])
-@constraint(model, [h in Hours, r in Region], HydroOutPower[h,r] <= hydroReservoirCapacity[r] + AdditionalCapacity[7,r])
-@constraint(model, [h in Hours, r in Region], HydroOutPower[h,r] == EnergyProduction[h,7,r])
-@constraint(model, [r in Region], hydroReservoirCapacity[r] + AdditionalCapacity[7,r] <= hydroMaxOverall[r])
+@constraint(model, [h in Hours, r in Region], EnergyProduction[h,7,r] <= hydroReservoirCapacity[r] + AdditionalCapacity[7,r])
+#@constraint(model, [h in Hours, r in Region], HydroOutPower[h,r] == EnergyProduction[h,7,r])
+@constraint(model, [r in Region], AdditionalCapacity[7,r] <= hydroMaxOverall[r])
 
-##EXPRESSIONS
+## EXPRESSIONS
 
-useC = @expression(model, sum(variableCostT[t]*EnergyProduction[h,t,r]/eff[t]
-    + fixedCostT[t]*(iniCapT[t,r] + AdditionalCapacity[t,r]) for t in TechNH, h in Hours, r in Region)
+useC = @expression(model, sum(variableCostT[t]*EnergyProduction[h,t,r]*(1/eff[t])
+    + fixedCostT[t]*(iniCapT[t,r] + AdditionalCapacity[t,r])*(1/eff[t]) for t in TechNH, h in Hours, r in Region)
 )
-einvC = @expression(model, sum(AdditionalCapacity[t,r]*invCostT[t]*(1/expLifeTimeT[t]) for t in TechNH, r in Region))
+einvC = @expression(model, sum(AdditionalCapacity[t,r]*invCostT[t]*(1/expLifeTimeT[t]) for t in Tech, r in Region))
 sinvC = @expression(model, sum(AdditionalStorage[s,r]*invCostS[s]*(1/expLifeTimeS[s]) for s in Storage, r in Region))
-taxC = @expression(model, sum(EnergyProduction[h,t,r]*TAX*(1/proEmisFactor[t-1])/eff[t] for t in CarbonTech, h in Hours, r in Region))
-rampExp = @expression(model, sum(((EnergyProduction[h,1,r] - EnergyProduction[h-1,1,r])^2)*1000 for h in Hours[Hours.>1], r in Region))
+taxC = @expression(model, sum(EnergyProduction[h,t,r]*TAX[r]*(1/1000)*(proEmisFactor[t-1])*(1/eff[t]) for t in CarbonTech, h in Hours, r in Region))
+rampExp = @expression(model, sum(((EnergyProduction[h,1,r] - EnergyProduction[h-1,1,r])^2)*1000 for h in Hours[Hours.>1], r in Region)) #for nuclear only
 transInv = @expression(model, sum(AdditionalTrans[r, rr]*transInvCost*transLen[r,rr] for r in Region, rr in Region))
 transCost = @expression(model, sum(transCost*Trans[h,r,rr] for h in Hours, r in Region, rr in Region))
-hydroinvC = @expression(model, sum(AdditionalCapacity[7,r]*invCostT[7]*(1/(expLifeTimeT[7])) for r in Region))
 
-##OBJECTIVE
-@objective(model, Min , useC + einvC + sinvC + taxC + rampExp + transInv + transCost + hydroinvC)
+
+## OBJECTIVE
+@objective(model, Min , useC + einvC + sinvC + taxC + rampExp + transInv + transCost)
 
 
 

@@ -1,7 +1,8 @@
 using Plots
 
 #APPLY CARBON TAX and LENGTH
-TAX = 25
+TAX_initial = [62, 2, 112, 0, 15, 0.07]
+TAX = TAX_initial
 LEN = 1000
 
 include("model.jl")
@@ -13,45 +14,54 @@ include("model.jl")
 
 
 
+include("bringData.jl")
 
 
 ## GATHER THE RESULTS
 
-TransResults = zeros(length(Hours), length(Region), length(Region))
-TransExpRestults = zeros(length(Region), length(Region))
-AllResults = zeros(length(Hours), length(Tech), length(Region),5)
-
-for h in Hours
-    for t in Tech
-        for r in Region
-            AllResults[h, t, r, 1] = value(EnergyProduction[h, t, r])
-            #AllResults[h, t, r, 2] = AdditionalCapacity[t, r]
-            #AllResults[h, t, r, 3] = AdditionalCapacity[t, r]
-            #AllResults[h, t, r, 4] = AdditionalCapacity[t, r]
-        end
-    end
-end
-
-for r in Region
-    for rr in Region
-        for h in Hours
-            TransResults[h,r,rr] = value.(Trans[h, r, rr])
-        end
-        TransExpRestults[r,rr] = value.(AdditionalTrans[r,rr])
-    end
-end
 
 #VISUALISATION PART
 ##
 
 #GENERIC PLOTS FOR SOME REGIONS
-for r in Region
-    plot(AllResults[:,1:7,r,1], title="Region", label = ["Nuclear" "CHP" "OTHER COAL" "Gas" "Wind" "PV" "Hydro"])
-end
-plot(AllResults[:,1:7,1,1], label = ["Nuclear" "CHP" "OTHER COAL" "Gas" "Wind" "PV" "Hydro"])
-plot(AllResults[:,1:7,2,1], label = ["Nuclear" "CHP" "OTHER COAL" "Gas" "Wind" "PV" "Hydro"])
-plot(AllResults[:,1:7,3,1], label = ["Nuclear" "CHP" "OTHER COAL" "Gas" "Wind" "PV" "Hydro"])
-plot(AllResults[:,1:7,4,1], label = ["Nuclear" "CHP" "OTHER COAL" "Gas" "Wind" "PV" "Hydro"])
+plot(AllResults[:,1:7,1,1], title="Finland", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro"])
+plot(AllResults[:,1:7,2,1], title="Estonia", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro"])
+plot(AllResults[:,1:7,3,1], title="Sweden", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro"])
+plot(AllResults[:,1:7,4,1], title="Germany", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro"])
+plot(AllResults[:,1:7,5,1], title="Spain", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro"])
+plot(AllResults[:,1:7,6,1], title="Poland", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro"])
+
+
+plot(AllResults[1, :, 1, 2], title="Additional in FI")
+plot(AllResults[1, :, 2, 2], title="Additional in EE")
+plot(AllResults[1, :, 3, 2], title="Additional in SE")
+plot(AllResults[1, :, 4, 2], title="Additional in DE")
+plot(AllResults[1, :, 5, 2], title="Additional in ES")
+plot(AllResults[1, :, 5, 2], title="Additional in PL")
+plot(AllResults[:, 1, 1, 3], fill= true, title="storage")
+plot(AllResults[:, 1, 1, 5], title="charge")
+plot(AllResults[:, 1, 1, 6], title="discarge")
+
+plot(TransResults[:,1,2,1])
+plot(TransResults[:, 5,1,2] )
+#TransExpRestults[r,rr]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ##GATHERING DATA IN NEW FORMAT
 pt = zeros(length(Hours), length(Region), length(Tech),2)
@@ -87,25 +97,31 @@ plot(TransResults[:,1,:])
 #PROMBLEM: THERE STILL SEEMS TO BE
 
 ##LOOP FOR DETERMINING RENEWABLES SHARE IN COMPARISON TO TAX LEVEL
-L = 50
+L = 40
+LEN = 500
+TAX_loop =  [62, 2, 112, 0, 15, 0.07]
 result = Matrix{Float64}(undef, L, 15)
 RENW = Matrix{Float64}(undef, length(Hours), 3)
+#opti = Matrix{undef}(undef, L)
 #k = collect(1::L)
 for i in 1:L
-    TAX = i*10-10
-    taxC = @expression(model, sum(EnergyProduction[h,t,r]*TAX*(1/proEmisFactor[t-1]) for t in CarbonTech, h in Hours, r in Region))
+    TAX = [1, 1, 1, 1, 1, 1]*5*i
+    i
+    taxC = @expression(model, sum(EnergyProduction[h,t,r]*TAX[r]*(1/1000)*(proEmisFactor[t-1])*(1/eff[t]) for t in CarbonTech, h in Hours, r in Region))
     @objective(model, Min , useC + einvC + sinvC + taxC + rampExp + transInv + transCost)
     optimized = optimize!(model)
     result[i,1] = objective_value(model)
+    #result[i,4] = optimized
     for h in Hours
         RENW[h,1] = value.(sum(EnergyProduction[h,5,r] for r in Region)) + value.(sum(EnergyProduction[h,6,r] for r in Region)) + value.(sum(EnergyProduction[h,7,r] for r in Region))
         RENW[h,2] = value.(sum(EnergyProduction[h,2,r] for r in Region)) + value.(sum(EnergyProduction[h,3,r] for r in Region)) + value.(sum(EnergyProduction[h,4,r] for r in Region))
         RENW[h,3] = value.(sum(EnergyProduction[h,t,r] for r in Region, t in Tech))
     end
     result[i,2] = sum(RENW[h,1] for h in Hours)./sum(RENW[h,2]+RENW[h,1] for h in Hours )
-    result[i,3] = sum(RENW[h,1] for h in Hours)./sum(RENW[h,2]+RENW[h,3] for h in Hours )
+    result[i,3] = sum(RENW[h,1] for h in Hours)./sum(RENW[h,3] for h in Hours )
 end
-plot(result[:,2])
+plot(result[:,1])
+plot(result[:,3])
 plot(RENW[:,2])
 plot(RENW[:,1])
 
