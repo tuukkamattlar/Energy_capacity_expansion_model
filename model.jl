@@ -18,7 +18,7 @@ include("values.jl")
 ##LAUNCH MODEL
 model = Model(Gurobi.Optimizer)
 
-##VARIABLES
+## VARIABLES
 @variable(model, 0 <= Charge[Storage, Hours, Region])
 @variable(model, 0 <= Discharge[Storage, Hours, Region])
 @variable(model, 0 <= StorageLevel[Storage, Hours, Region])
@@ -33,7 +33,7 @@ model = Model(Gurobi.Optimizer)
 #@variable(model, 0 <= HydroOutPower[Hours, Region])
 #@variable(model, TransBin[Hours,Region, Region], Bin)
 
-##CONSTRAINTS
+## CONSTRAINTS
 # PRODUCTION PRO TECHNOLOGY
 #@constraint(model, [h in Hours, t in Tech, r in Region], 0 <= EnergyProduction[h,t,r])
 #FOLLOWING ONLY FOR NON-HYDRO TECHNOLOGIES

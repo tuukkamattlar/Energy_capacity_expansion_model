@@ -2,8 +2,9 @@ using Plots
 
 #APPLY CARBON TAX and LENGTH
 TAX_initial = [62, 2, 112, 0, 15, 0.07]
+TAX_initial = [50, 50, 50, 50, 50, 50].*2
 TAX = TAX_initial
-LEN = 1000
+LEN = 4000
 
 include("model.jl")
 
@@ -24,12 +25,12 @@ include("bringData.jl")
 ##
 
 #GENERIC PLOTS FOR SOME REGIONS
-plot(AllResults[:,1:7,1,1], title="Finland", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro"])
-plot(AllResults[:,1:7,2,1], title="Estonia", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro"])
-plot(AllResults[:,1:7,3,1], title="Sweden", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro"])
-plot(AllResults[:,1:7,4,1], title="Germany", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro"])
-plot(AllResults[:,1:7,5,1], title="Spain", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro"])
-plot(AllResults[:,1:7,6,1], title="Poland", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro"])
+plot(AllResults[:,:,1,1], title="Finland", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro" "Storage" "Trans"])
+plot(AllResults[:,:,2,1], title="Estonia", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro" "Storage" "Trans"])
+plot(AllResults[:,:,3,1], title="Sweden", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro" "Storage" "Trans"])
+plot(AllResults[:,:,4,1], title="Germany", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro" "Storage" "Trans"])
+plot(AllResults[:,:,5,1], title="Spain", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro" "Storage" "Trans"])
+plot(AllResults[:,:,6,1], title="Poland", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro" "Storage" "Trans"])
 
 
 plot(AllResults[1, :, 1, 2], title="Additional in FI")
@@ -46,24 +47,7 @@ plot(TransResults[:,1,2,1])
 plot(TransResults[:, 5,1,2] )
 #TransExpRestults[r,rr]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##GATHERING DATA IN NEW FORMAT
+## GATHERING DATA IN NEW FORMAT
 pt = zeros(length(Hours), length(Region), length(Tech),2)
 for h in Hours
     for r in Region
@@ -96,16 +80,16 @@ plot(pt[:,1,:,2], fill = (0, 0), palette=cgrad([:red, :green, :yellow, :blue, :r
 plot(TransResults[:,1,:])
 #PROMBLEM: THERE STILL SEEMS TO BE
 
-##LOOP FOR DETERMINING RENEWABLES SHARE IN COMPARISON TO TAX LEVEL
-L = 40
-LEN = 500
+## LOOP FOR DETERMINING RENEWABLES SHARE IN COMPARISON TO TAX LEVEL
+L = 20
+LEN = 200
 TAX_loop =  [62, 2, 112, 0, 15, 0.07]
 result = Matrix{Float64}(undef, L, 15)
 RENW = Matrix{Float64}(undef, length(Hours), 3)
 #opti = Matrix{undef}(undef, L)
 #k = collect(1::L)
 for i in 1:L
-    TAX = [1, 1, 1, 1, 1, 1]*5*i
+    TAX = [1, 1, 1, 1, 1, 1]*7*i
     i
     taxC = @expression(model, sum(EnergyProduction[h,t,r]*TAX[r]*(1/1000)*(proEmisFactor[t-1])*(1/eff[t]) for t in CarbonTech, h in Hours, r in Region))
     @objective(model, Min , useC + einvC + sinvC + taxC + rampExp + transInv + transCost)
@@ -126,8 +110,9 @@ plot(RENW[:,2])
 plot(RENW[:,1])
 
 
-
-
+## end
+## end
+## end
 ## == FOLLOWING IS FULLY LEGACY ONLY FOR CODE SUPPORT REASONS == ##
 ###################################################################
 

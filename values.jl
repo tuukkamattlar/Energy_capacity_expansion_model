@@ -131,7 +131,7 @@ rampUpMax[4]        = 0.1 #not known
 rampDownMax[4]      = 0.1 #not known
 variableCostT[4]    = 22
 fixedCostT[4]       = 150 #not known
-invCostT[4]         = 500000
+invCostT[4]         = 700000
 expLifeTimeT[4]     = 40 #not known
 eff[4]              = 0.6
 
@@ -140,7 +140,7 @@ rampUpMax[5]        = 1 #not known
 rampDownMax[5]      = 1 #not known
 variableCostT[5]    = 0 #not known
 fixedCostT[5]       = 50 #not known
-invCostT[5]         = 1200000
+invCostT[5]         = 1000000
 expLifeTimeT[5]     = 30 #not known
 eff[5]              = 1
 
@@ -158,7 +158,7 @@ rampUpMax[7]        = 0.2 #not known
 rampDownMax[7]      = 0.3 #not known
 variableCostT[7]    = 110
 fixedCostT[7]       = 200 #not known
-invCostT[7]         = 1000000
+invCostT[7]         = 1300000
 expLifeTimeT[7]     = 40 #not known
 eff[7]              = 1 #not known
 
