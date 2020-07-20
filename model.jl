@@ -50,6 +50,15 @@ model = Model(Gurobi.Optimizer)
     maxCapT[t,r]
 )
 
+## MEETING THE DEMAND
+@constraint(model, [h in Hours, r in Region],
+    sum(EnergyProduction[h,t,r] for t in Tech)
+    + sum(Discharge[s,h,r] - Charge[s,h,r] for s in Storage) + sum(Trans[h,r,from] for from in Region)
+    - sum(Trans[h,to,r] for to in Region)
+    == Demand[h, r]
+)
+
+
 ## STORAGE
 @constraint(model, [s in Storage, h in Hours[Hours.>1], r in Region], StorageLevel[s,h,r] - StorageLevel[s,h-1,r] == Charge[s,h-1,r] - Discharge[s,h-1,r])
 @constraint(model, [s in Storage, h in Hours, r in Region], StorageLevel[s,h,r] <= AdditionalStorage[s,r] + iniCapS[s,r])
@@ -67,13 +76,6 @@ model = Model(Gurobi.Optimizer)
 #@constraint(model, [r in Region, rr in Region, h in Hours], TransBin[h,rr,r]*Trans[h,rr,r] + 1 >= Trans[h,rr,r])
 
 
-## MEETING THE DEMAND
-@constraint(model, [h in Hours, r in Region],
-    sum(EnergyProduction[h,t,r] for t in Tech)
-    + sum(Discharge[s,h,r] - Charge[s,h,r] for s in Storage) + sum(Trans[h,r,from] for from in Region)
-    - sum(Trans[h,to,r] for to in Region)
-    == Demand[h, r]
-)
 
 ## RAMPING LIMITATIONS
 @constraint(model, [h in Hours[Hours.>1], t in Tech, r in Region],
