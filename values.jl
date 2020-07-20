@@ -6,7 +6,8 @@ using CSV
 # 4 (bio)gas
 # 5 wind
 # 6 solar
-# 7 hydro
+# 7 Direct hydro
+# 8 Storal hydro
 
 #Regions/Nodes represent...
 # 1 Finland
@@ -19,10 +20,10 @@ using CSV
 ################################################################################
 # SETS
 
-Tech            = collect(1:7)
+Tech            = collect(1:8)
 CarbonTech      = collect(2:4)
 RenewableTech   = collect(5:7)
-TechNH          = collect(1:6)
+TechNH          = collect(1:7)
 Hours           = collect(1:LEN)
 Storage         = collect(1:1)
 Region          = collect(1:6)
@@ -78,7 +79,7 @@ for t in TechNH
     k = t+1
     for r in Region
         iniCapT[t,r] = d_capacity[r, k]
-        maxCapT[t,r] = d_capacity[r, k+14]
+        maxCapT[t,r] = d_capacity[r, k+15]
     end
 end
 
@@ -87,13 +88,13 @@ end
 # CAPACITY HYDRO
 
 for r in Region
-    hydroMinReservoir[r]        = d_capacity[r, 10]
-    hydroMaxReservoir[r]        = d_capacity[r, 11]
-    hydroReservoirCapacity[r]   = d_capacity[r, 12]
-    hydroMinEnvFlow[r]          = d_capacity[r, 13]
-    hydroMaxOverall[r]          = d_capacity[r, 23]
+    hydroMinReservoir[r]        = d_capacity[r, 11]
+    hydroMaxReservoir[r]        = d_capacity[r, 12]
+    hydroReservoirCapacity[r]   = d_capacity[r, 13]
+    hydroMinEnvFlow[r]          = d_capacity[r, 14]
+    hydroMaxOverall[r]          = d_capacity[r, 25]
     for h in Hours
-        hydroInflow[h,r]        = d_capacity[r, 8] .+rand(Float64,1)[1]*0.2*d_capacity[r, 8] #TODO
+        hydroInflow[h,r]        = d_capacity[r, 9] .+rand(Float64,1)[1]*0.2*d_capacity[r, 9] #TODO
     end
 end
 
@@ -153,7 +154,16 @@ invCostT[6]         = 800000
 expLifeTimeT[6]     = 30 #not known
 eff[6]              = 1 #not known
 
-# 7 hydro
+# 7 DirectHydro
+rampUpMax[7]        = 0.2 #not known
+rampDownMax[7]      = 0.3 #not known
+variableCostT[7]    = 110
+fixedCostT[7]       = 200 #not known
+invCostT[7]         = 1300000
+expLifeTimeT[7]     = 40 #not known
+eff[7]              = 1 #not known
+
+# 8 StoralHydro
 rampUpMax[7]        = 0.2 #not known
 rampDownMax[7]      = 0.3 #not known
 variableCostT[7]    = 110
@@ -172,6 +182,7 @@ for h in Hours
         capFactor[h, 4, r] = 1
         capFactor[h, 5, r] = d_available[h, r*4]
         capFactor[h, 6, r] = d_available[h, r*4-2]
+        capFactor[h, 7, r] = 1
     end
 end
 
@@ -192,8 +203,8 @@ expLifeTimeS    = Array{Float64}(undef, length(Storage))
 
 for s in Storage
     for r in Region #TODO
-        iniCapS[s,r] = d_capacity[r, 9]
-        maxCapS[s,r] = d_capacity[r, 9+14]
+        iniCapS[s,r] = d_capacity[r, 10]
+        maxCapS[s,r] = d_capacity[r, 10+15]
     end
     #general
     chargeMax[s] = 500

@@ -4,7 +4,7 @@ using Plots
 TAX_initial = [62, 2, 112, 0, 15, 0.07]
 TAX_initial = [50, 50, 50, 50, 50, 50].*2
 TAX = TAX_initial
-LEN = 4000
+LEN = 400
 
 include("model.jl")
 
@@ -25,12 +25,12 @@ include("bringData.jl")
 ##
 
 #GENERIC PLOTS FOR SOME REGIONS
-plot(AllResults[:,:,1,1], title="Finland", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro" "Storage" "Trans"])
-plot(AllResults[:,:,2,1], title="Estonia", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro" "Storage" "Trans"])
-plot(AllResults[:,:,3,1], title="Sweden", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro" "Storage" "Trans"])
-plot(AllResults[:,:,4,1], title="Germany", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro" "Storage" "Trans"])
-plot(AllResults[:,:,5,1], title="Spain", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro" "Storage" "Trans"])
-plot(AllResults[:,:,6,1], title="Poland", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Hydro" "Storage" "Trans"])
+plot(AllResults[:,:,1,1], title="Finland", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Direct Hydro" "Storal Hydro" "Storage" "Trans"])
+plot(AllResults[:,:,2,1], title="Estonia", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Direct Hydro" "Storal Hydro" "Storage" "Trans"])
+plot(AllResults[:,:,3,1], title="Sweden", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Direct Hydro" "Storal Hydro" "Storage" "Trans"])
+plot(AllResults[:,:,4,1], title="Germany", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Direct Hydro" "Storal Hydro" "Storage" "Trans"])
+plot(AllResults[:,:,5,1], title="Spain", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Direct Hydro" "Storal Hydro" "Storage" "Trans"])
+plot(AllResults[:,:,6,1], title="Poland", label = ["Nuclear" "CHP" "Other coal" "Gas" "Wind" "PV" "Direct Hydro" "Storal Hydro" "Storage" "Trans"])
 
 
 plot(AllResults[1, :, 1, 2], title="Additional in FI")
@@ -44,6 +44,7 @@ plot(AllResults[:, 1, 1, 5], title="charge")
 plot(AllResults[:, 1, 1, 6], title="discarge")
 
 plot(TransResults[:,1,2,1])
+plot(AllResults[:,10,4,1], title="Trans in a country")
 plot(TransResults[:, 5,1,2] )
 #TransExpRestults[r,rr]
 

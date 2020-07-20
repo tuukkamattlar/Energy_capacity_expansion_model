@@ -92,11 +92,11 @@ model = Model(Gurobi.Optimizer)
 @constraint(model, [h in Hours, r in Region], hydroMinReservoir[r] <= HydroReservoirLevel[h,r])
 @constraint(model, [h in Hours, r in Region], hydroMaxReservoir[r] >= HydroReservoirLevel[h,r])
 @constraint(model, [h in Hours[Hours.<LEN], r in Region], HydroReservoirLevel[h+1,r] == HydroReservoirLevel[h,r] + hydroInflow[h,r] - HydroOutflow[h,r])
-@constraint(model, [h in Hours, r in Region], HydroOutBypass[h,r] + EnergyProduction[h,7,r] == HydroOutflow[h,r])
+@constraint(model, [h in Hours, r in Region], HydroOutBypass[h,r] + EnergyProduction[h,8,r] == HydroOutflow[h,r])
 @constraint(model, [h in Hours, r in Region], HydroOutflow[h,r] >= hydroMinEnvFlow[r])
-@constraint(model, [h in Hours, r in Region], EnergyProduction[h,7,r] <= hydroReservoirCapacity[r] + AdditionalCapacity[7,r])
+@constraint(model, [h in Hours, r in Region], EnergyProduction[h,8,r] <= hydroReservoirCapacity[r] + AdditionalCapacity[8,r])
 #@constraint(model, [h in Hours, r in Region], HydroOutPower[h,r] == EnergyProduction[h,7,r])
-@constraint(model, [r in Region], AdditionalCapacity[7,r] <= hydroMaxOverall[r])
+@constraint(model, [r in Region], AdditionalCapacity[8,r] <= hydroMaxOverall[r])
 
 ## EXPRESSIONS
 
