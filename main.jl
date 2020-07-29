@@ -9,12 +9,6 @@ LEN = 400
 include("model.jl")
 
 
-
-
-
-
-
-
 include("bringData.jl")
 
 
