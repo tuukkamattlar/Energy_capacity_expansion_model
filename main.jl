@@ -4,15 +4,277 @@ using Plots
 TAX_initial = [62, 2, 112, 0, 15, 0.07]
 TAX_initial = [50, 50, 50, 50, 50, 50].*2
 TAX = TAX_initial
-LEN = 400
+LEN = 100
 
 include("model.jl")
+include("values.jl")
 
 
 include("bringData.jl")
 
+function runner(inp)
+    getData(inp)
+    value = runModel(inp)
+    state = value
+end
+
+
+## test run time
+invLen = 100
+timetaken = zeros(invLen, 3)
+steptime = zeros(5)
+for i in 1:invLen
+    include("model.jl")
+    iteration = i*80
+    timetaken[i,1] = @elapsed runner(iteration)
+    timetaken[i,2] = @elapsed runner(iteration)
+    #timetaken[i,3] = @elapsed runner(i*30)
+    #timetaken[i,4] = @elapsed runner(i*30)
+    #timetaken[i,5] = @elapsed runner(i*30)
+    timetaken[i,3] = iteration
+    #timetaken[i,7] = sum(timetaken[i,s] for s in 1:5)/4
+end
+
+timetaken[60,2] = 123.4
+timetaken[75,1] = 200.1
+timetaken[82,1] = 296.1
+
+togetherTime = zeros(100)
+for i in 1:100
+    iter = i*80
+    togetherTime[i] = (timetaken[i,1] + timetaken[i,2] )/2
+end
+
+plot(timetaken[:,3], togetherTime[:] , title="Running time", ylabel="Seconds (s)", xlabel="Hours in the model (h)", label="")
+
+plot(timetaken[:,2], timetaken[:,1], title="Running time", ylabel="Seconds (s)", xlabel="Hours in the model (h)", label="")
+
 
 ## GATHER THE RESULTS
+
+## run the main analysis
+
+function setTaxLevels(taxValues, L, LEN)
+    TAX_initial = [62, 2, 112, 1, 15, 0.07]
+    TAX = taxValues
+    result = Matrix{Float64}(undef, L, 20)
+    include("values.jl")
+    #include("model.jl")
+    #getData(LEN)
+    RENW = Matrix{Float64}(undef, length(Hours), 3)
+    result_additional_storage = zeros(L, length(Storage), length(Region))
+    result_charges = zeros(L,length(Storage),length(Hours),length(Region),3)
+    result_additional_capacity = zeros(L,length(Tech),length(Region))
+    result_AdditionalTrans = zeros(L,length(Region),length(Region))
+    result_hydros = zeros(L,length(Hours),length(Region),3)
+    result_trans = zeros(L,length(Hours),length(Region),length(Region))
+    result_energyProduction = zeros(L, length(Hours),length(Tech),length(Region))
+
+    Tech            = collect(1:8)
+    CarbonTech      = collect(2:4)
+    RenewableTech   = collect(5:7)
+    TechNR          = collect(1:7)
+    TechNRR          = collect(1:6)
+    Hours           = collect(1:LEN)
+    Storage         = collect(1:1)
+    Region          = collect(1:6)
+
+    for i in 1:L
+        taxLevel = i*5-5
+        TAX = TAX_initial.*taxLevel
+        ##LAUNCH MODEL
+        model = Model(Gurobi.Optimizer)
+        #set_optimizer_attributes(model, "Presolve" => 15000, "Heuristics" => 0.01)
+
+        ## VARIABLES
+        @variable(model, 0 <= Charge[Storage, Hours, Region])
+        @variable(model, 0 <= Discharge[Storage, Hours, Region])
+        @variable(model, 0 <= StorageLevel[Storage, Hours, Region])
+        @variable(model, 0 <= AdditionalStorage[Storage, Region])
+        @variable(model, 0 <= EnergyProduction[Hours, Tech, Region])
+        @variable(model, 0 <= AdditionalCapacity[Tech, Region])
+        @variable(model, 0 <= Trans[Hours, Region, Region])
+        @variable(model, 0 <= AdditionalTrans[Region, Region])
+        @variable(model, 0 <= HydroReservoirLevel[Hours, Region])
+        @variable(model, 0 <= HydroOutflow[Hours, Region])
+        @variable(model, 0 <= HydroOutBypass[Hours, Region])
+        #@variable(model, 0 <= HydroOutPower[Hours, Region])
+        #@variable(model, TransBin[Hours,Region, Region], Bin)
+
+        ## CONSTRAINTS
+        # PRODUCTION PRO TECHNOLOGY
+        #@constraint(model, [h in Hours, t in Tech, r in Region], 0 <= EnergyProduction[h,t,r])
+        #FOLLOWING ONLY FOR NON-HYDRO TECHNOLOGIES
+        @constraint(model, [h in Hours, t in TechNRR, r in Region],
+            EnergyProduction[h,t,r]
+            <=
+            capFactor[h,t,r]*(iniCapT[t,r]
+            + AdditionalCapacity[t,r])
+        )
+
+
+        #@constraint(model, [t in TechNH, r in Region], 0 <= AdditionalCapacity[t,r])
+        @constraint(model, [t in TechNR, r in Region],
+            AdditionalCapacity[t,r]
+            <=
+            maxCapT[t,r]
+        )
+
+        ## MEETING THE DEMAND
+        @constraint(model, [h in Hours, r in Region],
+            sum(EnergyProduction[h,t,r] for t in Tech)
+            + sum(Discharge[s,h,r] - Charge[s,h,r] for s in Storage) + sum(Trans[h,r,from] for from in Region)
+            - sum(Trans[h,to,r] for to in Region)
+            == Demand[h, r]
+        )
+
+
+        ## STORAGE
+        @constraint(model, [s in Storage, r in Region], AdditionalStorage[s,r] <= maxCapS[s,r])
+        @constraint(model, [s in Storage, h in Hours[Hours.>1], r in Region], StorageLevel[s,h,r] - StorageLevel[s,h-1,r] == Charge[s,h-1,r] - Discharge[s,h-1,r]*batteryEff)
+        @constraint(model, [s in Storage, h in Hours, r in Region], StorageLevel[s,h,r] <= AdditionalStorage[s,r] + iniCapS[s,r])
+        #@constraint(model, [s in Storage, h in Hours, r in Region], 0 <= Charge[s,h,r])
+        @constraint(model, [s in Storage, h in Hours, r in Region], Charge[s,h,r] <= chargeMax[s])
+        #@constraint(model, [s in Storage, h in Hours, r in Region], 0 <= Discharge[s,h,r])
+        @constraint(model, [s in Storage, h in Hours, r in Region], Discharge[s,h,r] <= dischargeMax[s])#@constraint(model, [s in Storage, r in Region], AdditionalStorage[s,r] <= maxCapS[s,r])
+
+        ## TRANS
+        #@constraint(model, [r in Region, h in Hours], Trans[h,r,r] == 0) #cannot trans ele within
+        @constraint(model, [r in Region], AdditionalTrans[r,r] == 0) #cannot trans ele within
+        @constraint(model, [r in Region, rr in Region, h in Hours], Trans[h, r, rr] <= transCap[r, rr] + AdditionalTrans[r, rr])
+        @constraint(model, [r in Region, rr in Region, h in Hours], transCap[r,rr] + AdditionalTrans[r,rr] <= maxTransCap[r, rr])
+        #@constraint(model, [r in Region, rr in Region, h in Hours], TransBin[h,rr,r]*Trans[h,rr,r] + 1 >= Trans[h,rr,r])
+
+
+
+        ## RAMPING LIMITATIONS
+        @constraint(model, [h in Hours[Hours.>1], t in Tech, r in Region],
+            EnergyProduction[h,t,r] - EnergyProduction[h-1,t,r]
+            >= -rampDownMax[t]*(iniCapT[t,r] + AdditionalCapacity[t,r])
+        )
+        @constraint(model, [h in Hours[Hours.>1], t in Tech, r in Region],
+            EnergyProduction[h,t,r] - EnergyProduction[h-1,t,r]
+            <= rampUpMax[t]*(iniCapT[t,r] + AdditionalCapacity[t,r])
+        )
+
+        ## HYDRO RES
+
+        @constraint(model, [h in Hours[Hours.>24], r in Region], hydroMinReservoir[r] <= HydroReservoirLevel[h,r])
+        @constraint(model, [h in Hours, r in Region], hydroMaxReservoir[r] >= HydroReservoirLevel[h,r])
+        @constraint(model, [h in Hours[Hours.<LEN], r in Region], HydroReservoirLevel[h+1,r] == HydroReservoirLevel[h,r] + hydroInflow[h,r] - HydroOutflow[h,r])
+        @constraint(model, [h in Hours, r in Region], HydroOutBypass[h,r] + EnergyProduction[h,8,r] == HydroOutflow[h,r])
+        @constraint(model, [h in Hours, r in Region], HydroOutflow[h,r] >= hydroMinEnvFlow[r])
+        @constraint(model, [h in Hours, r in Region], EnergyProduction[h,8,r] <= hydroReservoirCapacity[r] + AdditionalCapacity[8,r])
+        #@constraint(model, [h in Hours, r in Region], HydroOutPower[h,r] == EnergyProduction[h,7,r])
+        @constraint(model, [r in Region], AdditionalCapacity[8,r] <= hydroMaxOverall[r])
+
+        ## HYDRO ROR
+
+        @constraint(model, [h in Hours, r in Region],
+            EnergyProduction[h,7,r]
+            <=
+            capFactor[h,7,r]
+        )
+
+        @constraint(model, [h in Hours, r in Region],
+            EnergyProduction[h,7,r]
+            <=
+            iniCapT[7,r]
+        )
+
+        ## EXPRESSIONS
+
+        useC = @expression(model, sum(variableCostT[t]*EnergyProduction[h,t,r]*(1/eff[t])
+            + fixedCostT[t]*(iniCapT[t,r] + AdditionalCapacity[t,r])*(1/eff[t]) for t in TechNR, h in Hours, r in Region)
+        )
+        einvC = @expression(model, sum(AdditionalCapacity[t,r]*invCostT[t]*(1/expLifeTimeT[t]) for t in Tech, r in Region))
+        sinvC = @expression(model, sum(AdditionalStorage[s,r]*invCostS[s]*(1/expLifeTimeS[s]) for s in Storage, r in Region))
+        taxC = @expression(model, sum(EnergyProduction[h,t,r]*TAX[r]*(1/1000)*(proEmisFactor[t-1])*(1/eff[t]) for t in CarbonTech, h in Hours, r in Region))
+        #rampExp = @expression(model, sum(((EnergyProduction[h,1,r] - EnergyProduction[h-1,1,r])^2)*10 for h in Hours[Hours.>1], r in Region)) #for nuclear only
+        transInv = @expression(model, sum(AdditionalTrans[r, rr]*transInvCost*transLen[r,rr] for r in Region, rr in Region))
+        transCostF = @expression(model, sum(transCost*Trans[h,r,rr] for h in Hours, r in Region, rr in Region))
+
+
+        ## OBJECTIVE
+        @objective(model, Min , (useC + einvC + sinvC + taxC + transInv + transCostF)*0.0000001)
+
+
+
+        ##OPTIMIZE
+        timeOf = @elapsed optimize!(model)
+        print(i)
+        result[i,1] = timeOf
+        result[i,2] = objective_value(model)
+
+        for r in Region
+            for s in Storage
+                result_additional_storage[i,s,r] = value.(AdditionalStorage[s, r])
+                for h in Hours
+                    result_charges[i,s,h,r,1] = value.(Charge[s, h, r])
+                    result_charges[i,s,h,r,2] = value.(Discharge[s, h, r])
+                    result_charges[i,s,h,r,3] = value.(StorageLevel[s, h, r])
+                end
+            end
+            for t in Tech
+                result_additional_capacity[i,t,r] = value.(AdditionalCapacity[t, r])
+            end
+            for rr in Region
+                result_AdditionalTrans[i,r,rr] = value.(AdditionalTrans[r, rr])
+            end
+            for h in Hours
+                result_hydros[i,h,r,1] = value.(HydroReservoirLevel[h, r])
+                result_hydros[i,h,r,2] = value.(HydroOutflow[h, r])
+                result_hydros[i,h,r,3] = value.(HydroOutBypass[h, r])
+
+                for rr in Region
+                    result_trans[i,h,r,rr] = value.(Trans[h, r, rr])
+                end
+
+                for t in Tech
+                    result_energyProduction[i,h,t,r] = value.(EnergyProduction[h, t, r])
+                end
+            end
+        end
+
+        for h in Hours
+            RENW[h,1] = value.(sum(EnergyProduction[h,5,r] for r in Region)) + value.(sum(EnergyProduction[h,6,r] for r in Region)) + value.(sum(EnergyProduction[h,7,r] for r in Region)) + value.(sum(EnergyProduction[h,8,r] for r in Region))
+            RENW[h,2] = value.(sum(EnergyProduction[h,2,r] for r in Region)) + value.(sum(EnergyProduction[h,3,r] for r in Region)) + value.(sum(EnergyProduction[h,4,r] for r in Region))
+            RENW[h,3] = value.(sum(EnergyProduction[h,t,r] for r in Region, t in Tech))
+        end
+        result[i,3] = sum(RENW[h,1] for h in Hours)./sum(RENW[h,2]+RENW[h,1] for h in Hours )
+        result[i,4] = sum(RENW[h,1] for h in Hours)./sum(RENW[h,3] for h in Hours )
+        result[i,5] = taxLevel
+
+    end
+    return [result, RENW,result_additional_storage, result_charges, result_additional_capacity,result_AdditionalTrans,result_hydros,result_trans,result_energyProduction]
+end
+
+
+
+
+
+LEN = 1000
+INVESTIGATION = 10
+TAX = [62, 2, 112, 1, 15, 0.07]
+allocaterFREE_MLUTIPLY_8000_100 = setTaxLevels([62, 2, 112, 15, 15, 0.07], INVESTIGATION, LEN)
+plot( allocater[1][:,1])
+
+
+
+plot(result[:,1])
+plot(result[:,4])
+plot(RENW[:,2])
+plot(RENW[:,1])
+
+suomiT = zeros(L,length(Tech))
+for i in 1:L
+    for t in Tech
+        suomiT[i,t] = sum(result_energyProduction[i,h,t,1] for h in Hours)
+    end
+end
+plot(suomiT[:,8])
+
+##
 
 
 #VISUALISATION PART
@@ -77,7 +339,7 @@ plot(TransResults[:,1,:])
 
 ## LOOP FOR DETERMINING RENEWABLES SHARE IN COMPARISON TO TAX LEVEL
 L = 20
-LEN = 200
+LEN = 50
 TAX_loop =  [62, 2, 112, 0, 15, 0.07]
 result = Matrix{Float64}(undef, L, 15)
 RENW = Matrix{Float64}(undef, length(Hours), 3)
